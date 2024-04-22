@@ -1,0 +1,192 @@
+import { Transaction } from 'bsv'
+import {
+    method,
+    prop,
+    SmartContract,
+    hash256,
+    assert,
+    PubKey,
+    Sig,
+    ByteString,
+    SigHash,
+    UTXO,
+    bsv,
+    MethodCallOptions,
+    ContractTransaction
+} from 'scrypt-ts'
+
+export class SpendableDO extends SmartContract {
+    // Stateful property to store counters value.
+    @prop()
+    readonly tableID: bigint
+    @prop()
+    readonly UID: ByteString
+    @prop()
+    readonly ownerPubKey: PubKey
+
+    @prop(true)
+    key: ByteString
+    @prop(true)
+    val: ByteString
+    @prop(true)
+    writerPubKey: PubKey
+
+    constructor(
+        tableID: bigint,
+        key: ByteString,
+        val: ByteString,
+        ownerPubKey: PubKey,
+        UID: ByteString
+    ) {
+        super(...arguments)
+        this.tableID = tableID
+        this.key = key
+        this.val = val
+        this.ownerPubKey = ownerPubKey
+        this.writerPubKey = ownerPubKey
+        this.UID = UID
+    }
+
+    @method(SigHash.ANYONECANPAY_SINGLE)
+    public updateKey(
+        newKey: ByteString,
+        callerSig: Sig
+    ) {
+        assert(
+            this.checkSig(callerSig, this.ownerPubKey) ||
+                this.checkSig(callerSig, this.writerPubKey),
+            "caller's signature check failed"
+        )
+        // update key.
+        this.key = newKey
+
+        // Output containing the latest state.
+        const requiredOutput: ByteString = this.buildStateOutput(this.ctx.utxo.value)
+        this.debug.diffOutputs(requiredOutput)
+        assert(this.ctx.hashOutputs == hash256(requiredOutput))
+    }
+
+    @method(SigHash.ANYONECANPAY_SINGLE)
+    public updateValue(
+        newVal: ByteString,
+        callerSig: Sig,
+    ) {
+        assert(
+            this.checkSig(callerSig, this.ownerPubKey) ||
+                this.checkSig(callerSig, this.writerPubKey),
+            "caller's signature check failed"
+        )
+        // update key.
+        this.val = newVal
+
+        // Output containing the latest state.
+        const requiredOutput: ByteString = this.buildStateOutput(this.ctx.utxo.value)
+        // Verify current tx has this single output (and change output).
+        this.debug.diffOutputs(requiredOutput)
+        assert(this.ctx.hashOutputs == hash256(requiredOutput))
+    }
+
+    @method(SigHash.ANYONECANPAY_SINGLE)
+    public nameWriter(writerPubkey: PubKey, ownerSig: Sig) {
+        assert(
+            this.checkSig(ownerSig, this.ownerPubKey),
+            "owner's signature check failed"
+        )
+        this.writerPubKey = writerPubkey
+
+        // Output containing the latest state.
+        const requiredOutput: ByteString = this.buildStateOutput(this.ctx.utxo.value)
+        // Verify current tx has this single output (and change output).
+        this.debug.diffOutputs(requiredOutput)
+        assert(this.ctx.hashOutputs == hash256(requiredOutput))
+    }
+
+    override async buildDeployTransaction(
+        utxos: UTXO[], 
+        amount: number, 
+        changeAddress: bsv.Address | string): Promise<bsv.Transaction> 
+    {
+        const deployTx = new bsv.Transaction()
+            // add p2pkh inputs for paying tx fees
+            .from(utxos)
+            // add contract output
+            .addOutput(new bsv.Transaction.Output({
+                script: this.lockingScript,
+                satoshis: amount,
+            }))
+
+        deployTx.change(changeAddress);
+        // if (this._provider) {
+        //     deployTx.feePerKb(await this.provider.getFeePerKb())
+        // }
+        return deployTx;
+    }
+
+    // static buildTxForUpdateKey( 
+    //     current: SpendableDO, 
+    //     options: MethodCallOptions<SpendableDO>, 
+    //     newKey: ByteString, 
+    // ): Promise<ContractTransaction> { 
+    //     const nextInstance = current.next() 
+    //     nextInstance.key = newKey 
+ 
+    //     const unsignedTx: Transaction = new Transaction() 
+    //         // add contract input 
+    //         .addInput(current.buildContractInput()) 
+    //         // build next instance output 
+    //         .addOutput( 
+    //             new Transaction.Output({ 
+    //                 script: nextInstance.lockingScript, 
+    //                 satoshis: nextInstance.balance, 
+    //             }) 
+    //         )
+ 
+    //     if (options.changeAddress) { 
+    //         // build change output 
+    //         unsignedTx.change(options.changeAddress) 
+    //     } 
+ 
+    //     return Promise.resolve({ 
+    //         tx: unsignedTx, 
+    //         atInputIndex: 0, 
+    //         nexts: [ 
+    //             { 
+    //                 instance: nextInstance, 
+    //                 atOutputIndex: 0, 
+    //                 balance: nextInstance.balance, 
+    //             }, 
+    //         ], 
+    //     }) 
+    // } 
+
+    // @method(SigHash.ANYONECANPAY_SINGLE)
+    // public updateTableID(newTableID: bigint, ownerSig: Sig) {
+    //     assert(
+    //         this.checkSig(ownerSig, this.ownerPubKey),
+    //         "owner's signature check failed"
+    //     )
+    //     // update table ID
+    //     this.tableID = newTableID
+
+    //     // Output containing the latest state.
+    //     const requiredOutput: ByteString = this.buildStateOutput(this.ctx.utxo.value)
+    //     // Verify current tx has this single output (and change output).
+    //     this.debug.diffOutputs(requiredOutput)
+    //     assert(this.ctx.hashOutputs == hash256(requiredOutput))
+    // }
+
+    // @method(SigHash.ANYONECANPAY_SINGLE)
+    // public transferOwnership(newOwnerPubkey: PubKey, ownerSig: Sig) {
+    //     assert(
+    //         this.checkSig(ownerSig, this.ownerPubKey),
+    //         "owner's signature check failed"
+    //     )
+    //     this.ownerPubKey = newOwnerPubkey
+
+    //     // Output containing the latest state.
+    //     const requiredOutput: ByteString = this.buildStateOutput(this.ctx.utxo.value)
+    //     // Verify current tx has this single output (and change output).
+    //     this.debug.diffOutputs(requiredOutput)
+    //     assert(this.ctx.hashOutputs == hash256(requiredOutput))
+    // }
+}
