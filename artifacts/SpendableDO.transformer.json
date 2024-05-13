@@ -1,0 +1,10 @@
+{
+  "success": true,
+  "errors": [],
+  "scryptfile": "SpendableDO.scrypt",
+  "sourceMapFile": "SpendableDO.scrypt.map",
+  "ctxMethods": [
+    "updateKeyVal",
+    "nameWriter"
+  ]
+}
