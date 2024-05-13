@@ -5,12 +5,11 @@ import { prettyString } from "./read"
 import fs from "fs"
 import { TxOutputRef, bsv } from "scrypt-ts"
 import pako from 'pako';
-import { usingTestnet } from "../utiles/helper"
-import e from "express"
 
 const MainnetPersistencePath = 'src/SDB/persistence/mainnet/storageCompressed.bin'
 const TestnetPersistencePath = 'src/SDB/persistence/testnet/storageCompressed.bin'
 
+const usingTestnet = false
 
 export async function loadSDOsCompressed(SDO_curr_state: Map<string, LLNodeSDO>, verbose: boolean = false) {
     console.log("Loading pesisted SDO instances.....")
@@ -50,37 +49,6 @@ export async function loadSDOsCompressed(SDO_curr_state: Map<string, LLNodeSDO>,
         console.error(err)
         throw err
     })
-
-    // try {
-    //     console.log("Loading pesisted SDO instances.....")
-    //     let filePath : string;
-    //     if (usingTestnet) {
-    //         filePath = TestnetPersistencePath
-    //     } else {
-    //         filePath = MainnetPersistencePath
-    //     }
-    //     const compressedBuffer = await fs.promises.readFile(filePath)
-    //     const jsonArray = pako.inflate(compressedBuffer, { to: 'string' })
-    //     if (jsonArray == undefined) {
-    //         console.log("No SDO was persisted in file ", filePath)
-    //         return
-    //     }
-    //     const restoredArray = JSON.parse(jsonArray)
-
-    //     restoredArray.forEach((restoredObject : any) => {
-    //         const restoredTx = new bsv.Transaction(restoredObject.rawTx)
-    //         const restoredSDO = SpendableDO.fromTx(restoredTx, restoredObject.outputIndex)
-    //         localRegisterSDO(restoredSDO, restoredObject.block_time, SDO_curr_state, false)
-    //         if (verbose) {
-    //             console.log(prettyString(restoredSDO))
-    //         }
-    //     })
-    //     console.log("Loaded ", restoredArray.length, " SDO instances.")
-    //     return Promise.resolve(100000)
-    // } catch (error) {
-    //     console.error(error)
-    //     return Promise.resolve(10)
-    // }
 }
 
 export function persistSDOsCompressed(SDO_curr_state: Map<string, LLNodeSDO>, known_block_height: number) {

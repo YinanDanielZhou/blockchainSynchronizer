@@ -4,7 +4,6 @@ import { PubKey, TestWallet, bsv, toByteString } from "scrypt-ts"
 import { LLNodeSDO } from '../utiles/dataStructures';
 
 import { SpendableDO } from "../../contracts/SpendableDO";
-import { testnetAddrA } from '../utiles/privateKey';
 
 SpendableDO.loadArtifact()
 
@@ -14,7 +13,7 @@ let ws : WebSocket | undefined;
 let clientID;
 let reconnect = true;
 let numFailures = 0;
-let SDBAddress = testnetAddrA;
+let SDBAddress = "replace address here";
 
 (async function main() {
     startWebsocket()

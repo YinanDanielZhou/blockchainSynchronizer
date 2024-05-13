@@ -1,8 +1,5 @@
 import axios, { AxiosResponse } from 'axios';
-import http from 'http';
-import url from 'url'
 
-import { testnetAddrA  } from '../utiles/privateKey';
 
 async function sendGetRequest(url: string, headers: Record<string, string>): Promise<AxiosResponse<any>> {
     try {
