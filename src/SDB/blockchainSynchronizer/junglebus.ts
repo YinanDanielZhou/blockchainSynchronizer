@@ -10,6 +10,7 @@ import express, { Request, Response } from "express";
 SpendableDO.loadArtifact()
 
 let SDO_curr_state = new Map<string, LLNodeSDO>();
+let persistence_version: number;
 let known_block_height: number;
 let processed_update_txn_count = 0;
 
@@ -32,7 +33,7 @@ const client = new JungleBusClient("junglebus.gorillapool.io", {
 
 const onPublish = function(message) {
     console.log("IN-BLOCK TRANSACTION", message.id);
-    // processIncomingTransactionMsg(message)
+    processIncomingTransactionMsg(message)
 };
 
 const onStatus = function(message) {
@@ -149,13 +150,14 @@ function startRESTfulServer() {
 
 (async () => {
 
-    known_block_height = await loadSDOsCompressed(SDO_curr_state, false)
+    let rtn = await loadSDOsCompressed(SDO_curr_state, false)
+    persistence_version = rtn[0]
+    known_block_height = rtn[1]
+
     await client.Subscribe("1e5d27bb7ea6e4ef330bf6d9bb17a42430ffe8fdfff26cc00172e2a9089fcfc8", known_block_height + 1, onPublish, onStatus, onError, onMempool);
     await client.Subscribe("b0f69bb599f193a42d8cdf360549e4665c551150acaba9724be0c81670e3bd00", known_block_height + 1, onPublish, () => {}, onError, onMempool); // only one subscription need to react to onStatus
     await client.Subscribe("7c96a193f91a9d3ad7f0671169d399a80d711d3d900f4e3d52622b3c5280ef25", known_block_height + 1, onPublish, () => {}, onError, onMempool); // only one subscription need to react to onStatus
     await client.Subscribe("0a8b721260a03b05447d76c571c297b872c2d5cb09ba2955b1a91da6b247469e", known_block_height + 1, onPublish, () => {}, onError, onMempool); // only one subscription need to react to onStatus
-    
-
     
     const APIserver = startRESTfulServer();
 
@@ -164,6 +166,6 @@ function startRESTfulServer() {
             console.log("API server is shut down.")
         })
         client.Disconnect()
-        persistSDOsCompressed(SDO_curr_state, known_block_height);
+        persistSDOsCompressed(SDO_curr_state, persistence_version + 1, known_block_height);
     });
 })();

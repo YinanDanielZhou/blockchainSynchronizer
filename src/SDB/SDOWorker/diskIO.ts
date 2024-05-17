@@ -21,17 +21,22 @@ export async function loadSDOsCompressed(SDO_curr_state: Map<string, LLNodeSDO>,
     }
 
     let known_block_height = -1
+    let persistence_version = -1
     return fs.promises.readFile(filePath).then((compressedBuffer) => {
         const jsonArray = pako.inflate(compressedBuffer, { to: 'string' })
         if (jsonArray.length < 2) {
             console.log("No SDO was persisted in file ", filePath)
-            return known_block_height
+            return [persistence_version, known_block_height]
         }
 
         const restoredArray = (JSON.parse(jsonArray) as Object[])
 
         restoredArray.forEach((restoredObject : any, index) => {
             if (index == 0) {
+                persistence_version = restoredObject
+                return 
+            }
+            if (index == 1) {
                 known_block_height = restoredObject
                 return
             }
@@ -42,18 +47,19 @@ export async function loadSDOsCompressed(SDO_curr_state: Map<string, LLNodeSDO>,
                 console.log(prettyString(restoredSDO))
             }
         })
-        console.log("Loaded ", restoredArray.length - 1, " SDO instances.")
+        console.log(`Persistence version ${persistence_version}`)
+        console.log("Loaded ", restoredArray.length - 2, " SDO instances.")   // first 2 objects are not SDO instances
         console.log(`Resuming from block height ${known_block_height}`)
-        return known_block_height
+        return [persistence_version, known_block_height]
     }).catch((err) => {
         console.error(err)
         throw err
     })
 }
 
-export function persistSDOsCompressed(SDO_curr_state: Map<string, LLNodeSDO>, known_block_height: number) {
+export function persistSDOsCompressed(SDO_curr_state: Map<string, LLNodeSDO>, persistence_version: number, known_block_height: number) {
     console.log("Persisting SDO instances")
-    let array : Object[] = [known_block_height]
+    let array : Object[] = [persistence_version, known_block_height]
 
     for (const [uid, llNodeSDO] of SDO_curr_state) {
         let curNode = llNodeSDO
@@ -85,8 +91,8 @@ export function persistSDOsCompressed(SDO_curr_state: Map<string, LLNodeSDO>, kn
         if (err) {
             console.error('Error writing to file:', err);
         } else {
-            console.log(`Last known block height is ${array[0]}`)
-            console.log(array.length - 1, ' SDO instances has been persisted to file:', filePath);
+            console.log(`Persistence_version ${array[0]}, Last known block height is ${array[1]}.`)  
+            console.log(array.length - 2, ' SDO instances has been persisted to file:', filePath)  // first 2 objects are not SDO instances
         }
     })
 }
