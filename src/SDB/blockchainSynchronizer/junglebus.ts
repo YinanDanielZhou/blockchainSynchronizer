@@ -5,13 +5,14 @@ import { SpendableDO } from "../../contracts/SpendableDO";
 import { TxOutputRef, bsv } from "scrypt-ts";
 import { prettyString } from "../SDOWorker/read";
 import express, { Request, Response } from "express";
-import session from "express-session";
 
 
 SpendableDO.loadArtifact()
 
 let SDO_curr_state = new Map<string, LLNodeSDO>();
+let persistence_version: number;
 let known_block_height: number;
+let processed_update_txn_count = 0;
 
 const client = new JungleBusClient("junglebus.gorillapool.io", {
     protocol: "protobuf",
@@ -38,7 +39,9 @@ const onPublish = function(message) {
 const onStatus = function(message) {
     if (message.statusCode === ControlMessageStatusCode.BLOCK_DONE) {
       console.log("BLOCK DONE", message.block);
+      console.log("Processed " + processed_update_txn_count + " update txns from this block")
       known_block_height = message.block
+      processed_update_txn_count = 0
     } else if (message.statusCode === ControlMessageStatusCode.WAITING) {
       console.log("WAITING FOR NEW BLOCK...", new Date().toLocaleString());
       if (message.statusCode !== 100) {
@@ -67,9 +70,14 @@ function processIncomingTransactionMsg(message) {
 
     if (txn.inputs.length == 1 && txn.outputs.length == 2) {
         // this is a SDO deployment txn
-        const sdo = SpendableDO.fromTx(txn, 0)
-        sdo.markAsGenesis()
-        localRegisterSDO(sdo, message.block_time, SDO_curr_state, true);
+        try {
+            const sdo = SpendableDO.fromTx(txn, 0)
+            sdo.markAsGenesis()
+            localRegisterSDO(sdo, message.block_time, SDO_curr_state, true);
+        } catch (error) {
+            console.log("Incoming txn looks like a sdo deployment, but registering fail with Error below.")
+            console.log(error)
+        }
     }
 
     if (txn.inputs.length == txn.outputs.length) {
@@ -79,6 +87,7 @@ function processIncomingTransactionMsg(message) {
             const prevTxId = txn.inputs[outIndex].prevTxId.toString('hex')    // get the previous sdo state's transaction id
             localUpdateSDO(sdo, message.block_time, SDO_curr_state, prevTxId);
         }
+        processed_update_txn_count += 1
     }
 }
 
@@ -137,13 +146,18 @@ function startRESTfulServer() {
 // 836566   // SDB address finished setting up, 64 payment utxos set up
 // 836573   // first few SDOs
 // 1000000
-let startBlockHeight = 837891;
+// let startBlockHeight = 842275;
 
 (async () => {
 
-    known_block_height = await loadSDOsCompressed(SDO_curr_state, false)
-    await client.Subscribe("8e91d8e710de1323ef1adf31f335ef9f921f9ab1e95ce1ab7c64a9d4163415d4", known_block_height + 1, onPublish, onStatus, onError, onMempool);
-    await client.Subscribe("0477836b086e0628a160eb45742059fc853601b73dde8d596df5916deab87e28", known_block_height + 1, onPublish, () => {}, onError, onMempool); // only one subscription need to react to onStatus
+    let rtn = await loadSDOsCompressed(SDO_curr_state, false)
+    persistence_version = rtn[0]
+    known_block_height = rtn[1]
+
+    await client.Subscribe("1e5d27bb7ea6e4ef330bf6d9bb17a42430ffe8fdfff26cc00172e2a9089fcfc8", known_block_height + 1, onPublish, onStatus, onError, onMempool);
+    await client.Subscribe("b0f69bb599f193a42d8cdf360549e4665c551150acaba9724be0c81670e3bd00", known_block_height + 1, onPublish, () => {}, onError, onMempool); // only one subscription need to react to onStatus
+    await client.Subscribe("7c96a193f91a9d3ad7f0671169d399a80d711d3d900f4e3d52622b3c5280ef25", known_block_height + 1, onPublish, () => {}, onError, onMempool); // only one subscription need to react to onStatus
+    await client.Subscribe("0a8b721260a03b05447d76c571c297b872c2d5cb09ba2955b1a91da6b247469e", known_block_height + 1, onPublish, () => {}, onError, onMempool); // only one subscription need to react to onStatus
     
     const APIserver = startRESTfulServer();
 
@@ -152,8 +166,6 @@ let startBlockHeight = 837891;
             console.log("API server is shut down.")
         })
         client.Disconnect()
-        persistSDOsCompressed(SDO_curr_state, known_block_height);
+        persistSDOsCompressed(SDO_curr_state, persistence_version + 1, known_block_height);
     });
 })();
-
-
