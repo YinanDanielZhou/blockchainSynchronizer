@@ -33,7 +33,7 @@ async function getConfirmedUTXOByScript (scriptHash: string) {
 }
 
 
-export async function integrityCheck(SDO_curr_state: Map<string, LLNodeSDO>, verbose: boolean = false) {
+export async function integrityCheck(SDO_curr_state: Map<string, LLNodeSDO>) {
     // For Each cached SDO, check if it is the most recent verion, (aka the Script has a confirmed UTxO)
     console.log("Checking the integrity of all SDO instances.....")
 
@@ -90,7 +90,7 @@ async function getTxnBlockTime(hash: string) {
 export async function makeupMissingTxn(txid: string, SDO_curr_state: Map<string, LLNodeSDO>) {
     // After running the integrityCheck, if found a SDO is not the most upto date version
     // run this function to manually synchronize with the blockchain to include those missing txns
-    
+
     const txnRaw = await getRawTxnByHash(txid)
     const blocktime = await getTxnBlockTime(txid)
     console.log(blocktime)
