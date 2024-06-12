@@ -162,6 +162,7 @@ function startRESTfulServer() {
     const APIserver = startRESTfulServer();
 
     process.on('SIGINT', () => {
+        console.log("process on SIGINT.")
         APIserver.close(() => {
             console.log("API server is shut down.")
         })
