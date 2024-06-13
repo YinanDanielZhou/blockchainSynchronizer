@@ -5,6 +5,7 @@ import { SpendableDO } from "../../contracts/SpendableDO";
 import { TxOutputRef, bsv } from "scrypt-ts";
 import { prettyString } from "../SDOWorker/read";
 import express, { Request, Response } from "express";
+import { integrityCheck } from "../SDOWorker/integrityCheck";
 
 
 SpendableDO.loadArtifact()
@@ -170,3 +171,13 @@ function startRESTfulServer() {
         persistSDOsCompressed(SDO_curr_state, persistence_version + 1, known_block_height);
     });
 })();
+
+// (async () => {
+//     let rtn = await loadSDOsCompressed(SDO_curr_state, false)
+//     persistence_version = rtn[0]
+//     known_block_height = rtn[1]
+
+//     await integrityCheck(SDO_curr_state)
+
+//     persistSDOsCompressed(SDO_curr_state, persistence_version + 1, known_block_height);
+// })();
