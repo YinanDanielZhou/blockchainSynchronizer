@@ -17,7 +17,7 @@ async function sendGetRequest(url: string, headers: Record<string, string>): Pro
     }
 }
 
-export async function getConfirmedUTXOByScript (scriptHash: string) {
+async function getConfirmedUTXOByScript (scriptHash: string) {
 
     const network = 'main'
     const apiUrl = `https://api.whatsonchain.com/v1/bsv/${network}/script/${scriptHash}/confirmed/unspent`;
@@ -30,6 +30,47 @@ export async function getConfirmedUTXOByScript (scriptHash: string) {
     };
 
     return sendGetRequest(apiUrl, customHeaders)
+}
+
+export async function getScriptHistory(scriptHash: string) {
+    const network = 'main'
+    const apiUrl = `https://api.whatsonchain.com/v1/bsv/${network}/script/${scriptHash}/confirmed/history`;
+
+    const TaalAPIKey = 'mainnet_939f95f7b15fbf7086ad0a42552c9613'
+    const customHeaders = {
+        'Content-Type': 'application/json',
+        'Authorization': TaalAPIKey
+    };
+
+    return sendGetRequest(apiUrl, customHeaders)
+}
+
+export async function dupScriptDetection(SDO_curr_state: Map<string, LLNodeSDO>) {
+    // For Each cached SDO, check if it is the most recent verion, (aka the Script has a confirmed UTxO)
+    console.log("Find the scripts that have multiple dups....")
+
+    const iterator = SDO_curr_state.entries()
+    let iter = iterator.next()
+
+    let counter = 1
+    while (!iter.done) {
+        await getScriptHistory(iter.value[1].this.scriptHash)
+        .then((response) => {
+            if (response.data.result.length > 1) {
+                console.log(response.data.result.length, response.data.script)
+            }
+        })
+        .catch(() => { 
+            console.log("???")
+        })
+        counter += 1
+        iter = iterator.next()
+        if (counter % 3 == 0) {
+            console.log(counter, " checked.")
+            // TAAl api request is rate limited to 3/sec
+            await new Promise(resolve => setTimeout(resolve, 1000))
+        }
+    }
 }
 
 
