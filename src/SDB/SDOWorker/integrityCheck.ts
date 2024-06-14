@@ -17,7 +17,7 @@ async function sendGetRequest(url: string, headers: Record<string, string>): Pro
     }
 }
 
-async function getConfirmedUTXOByScript (scriptHash: string) {
+export async function getConfirmedUTXOByScript (scriptHash: string) {
 
     const network = 'main'
     const apiUrl = `https://api.whatsonchain.com/v1/bsv/${network}/script/${scriptHash}/confirmed/unspent`;
@@ -43,8 +43,14 @@ export async function integrityCheck(SDO_curr_state: Map<string, LLNodeSDO>) {
     let counter = 1
     while (!iter.done) {
         await getConfirmedUTXOByScript(iter.value[1].this.scriptHash)
-        .then((response) => { 
-            console.log("  valid", counter, iter.value[1].this.UID)
+        .then((response) => {
+            if (response.data.result[0].tx_hash !== iter.value[1].this.utxo.txId) {
+                console.log("invalid", counter, iter.value[1].this.UID)
+                console.log("BC   : ", response.data.result[0].tx_hash)
+                console.log("Local: ", iter.value[1].this.utxo.txId)
+            } else {
+                console.log("  valid", counter, iter.value[1].this.UID)
+            }
         })
         .catch(() => { 
             console.log("invalid", counter, iter.value[1].this.UID)
