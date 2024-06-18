@@ -5,7 +5,7 @@ import { SpendableDO } from "../../contracts/SpendableDO";
 import { TxOutputRef, bsv } from "scrypt-ts";
 import { prettyString } from "../SDOWorker/read";
 import express, { Request, Response } from "express";
-import { integrityCheck } from "../SDOWorker/integrityCheck";
+import { integrityCheck, makeupMissingTxn } from "../SDOWorker/integrityCheck";
 
 
 SpendableDO.loadArtifact()
@@ -179,5 +179,7 @@ function startRESTfulServer() {
 
 //     await integrityCheck(SDO_curr_state)
 
-//     persistSDOsCompressed(SDO_curr_state, persistence_version + 1, known_block_height);
+//     // await makeupMissingTxn("", SDO_curr_state)
+
+//     // persistSDOsCompressed(SDO_curr_state, persistence_version + 1, known_block_height);
 // })();

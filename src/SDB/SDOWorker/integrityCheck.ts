@@ -1,4 +1,3 @@
-import { resourceLimits } from "worker_threads";
 import { LLNodeSDO } from "../utiles/dataStructures";
 import axios, { AxiosResponse } from 'axios';
 import { SpendableDO } from "../../contracts/SpendableDO";
@@ -17,10 +16,19 @@ async function sendGetRequest(url: string, headers: Record<string, string>): Pro
     }
 }
 
-async function getConfirmedUTXOByScript (scriptHash: string) {
+async function sendPostRequest(url: string, postData: Record<string, string[]>, headers: Record<string, string>): Promise<AxiosResponse<any>> {
+    try {
+        const response = await axios.post(url, postData, headers);
+        return response;
+    } catch (error) {
+        throw error;
+    }
+}
+
+async function getBulkConfirmedUTXOByScript (scriptHashList: string[]) {
 
     const network = 'main'
-    const apiUrl = `https://api.whatsonchain.com/v1/bsv/${network}/script/${scriptHash}/confirmed/unspent`;
+    const apiUrl = `https://api.whatsonchain.com/v1/bsv/${network}/scripts/confirmed/unspent`;
 
 
     const TaalAPIKey = 'mainnet_939f95f7b15fbf7086ad0a42552c9613'
@@ -29,7 +37,11 @@ async function getConfirmedUTXOByScript (scriptHash: string) {
         'Authorization': TaalAPIKey
     };
 
-    return sendGetRequest(apiUrl, customHeaders)
+    const postData = {
+        'scripts' : scriptHashList
+    }
+
+    return sendPostRequest(apiUrl, postData, customHeaders)
 }
 
 export async function getScriptHistory(scriptHash: string) {
@@ -82,23 +94,39 @@ export async function integrityCheck(SDO_curr_state: Map<string, LLNodeSDO>) {
     let iter = iterator.next()
 
     let counter = 1
+    let scriptList : string[] = []
+    let txIdList : string[] = []
     while (!iter.done) {
-        await getConfirmedUTXOByScript(iter.value[1].this.scriptHash)
-        .then((response) => {
-            if (response.data.result[0].tx_hash !== iter.value[1].this.utxo.txId) {
-                console.log("invalid", counter, iter.value[1].this.UID)
-                console.log("BC   : ", response.data.result[0].tx_hash)
-                console.log("Local: ", iter.value[1].this.utxo.txId)
-            } else {
-                console.log("  valid", counter, iter.value[1].this.UID)
-            }
-        })
-        .catch(() => { 
-            console.log("invalid", counter, iter.value[1].this.UID)
-        })
+        scriptList.push(iter.value[1].this.scriptHash)
+        txIdList.push(iter.value[1].this.utxo.txId)
         counter += 1
         iter = iterator.next()
-        if (counter % 3 == 0) {
+
+        if (scriptList.length == 20 || iter.done) {
+            await getBulkConfirmedUTXOByScript(scriptList).
+            then((response) => {
+                for (let index = 0; index < response.data.length; index++) {
+                    if (response.data[index].result.length == 0) {
+                        console.log("invalid", scriptList[index])
+                        console.log("BC   : no valid UTXO")
+                        console.log("Local: ", txIdList[index])
+                    } else if (response.data[index].result[0].tx_hash !== txIdList[index]) {
+                        console.log("invalid", scriptList[index])
+                        console.log("BC   : ", response.data.result[0].tx_hash)
+                        console.log("Local: ", txIdList[index])
+                    } else {
+                        // console.log("  valid", txIdList[index])
+                    }
+                }
+            })
+            .catch((error) => {
+                console.error(error)
+            })
+            scriptList = []
+            txIdList = []
+        }
+        if (counter % 60 == 0) {
+            console.log(counter, "done.")
             // TAAl api request is rate limited to 3/sec
             await new Promise(resolve => setTimeout(resolve, 1000))
         }
