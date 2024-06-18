@@ -63,32 +63,37 @@ const onMempool = function(message) {
 };
 
 function processIncomingTransactionMsg(message) {
-    const txn = new bsv.Transaction(message.transaction)
-    if (txn.outputs.length < 2) {
-        console.log("Txn structure does not match a SDB transaction.")
-        return
-    }
-
-    if (txn.inputs.length == 1 && txn.outputs.length == 2) {
-        // this is a SDO deployment txn
-        try {
-            const sdo = SpendableDO.fromTx(txn, 0)
-            sdo.markAsGenesis()
-            localRegisterSDO(sdo, message.block_time, SDO_curr_state, true);
-        } catch (error) {
-            console.log("Incoming txn looks like a sdo deployment, but registering fail with Error below.")
-            console.log(error)
+    try{
+        const txn = new bsv.Transaction(message.transaction)
+        if (txn.outputs.length < 2) {
+            console.log("Txn structure does not match a SDB transaction.")
+            return
         }
-    }
-
-    if (txn.inputs.length == txn.outputs.length) {
-        // this is a SDO state update txn
-        for (let outIndex = 0; outIndex < txn.outputs.length - 1; outIndex++) {   // the last outIndex is the payment so is ignored
-            const sdo = SpendableDO.fromTx(txn, outIndex)
-            const prevTxId = txn.inputs[outIndex].prevTxId.toString('hex')    // get the previous sdo state's transaction id
-            localUpdateSDO(sdo, message.block_time, SDO_curr_state, prevTxId);
+    
+        if (txn.inputs.length == 1 && txn.outputs.length == 2) {
+            // this is a SDO deployment txn
+            try {
+                const sdo = SpendableDO.fromTx(txn, 0)
+                sdo.markAsGenesis()
+                localRegisterSDO(sdo, message.block_time, SDO_curr_state, true);
+            } catch (error) {
+                console.log("Incoming txn looks like a sdo deployment, but registering fail with Error below.")
+                console.log(error)
+            }
         }
-        processed_update_txn_count += 1
+    
+        if (txn.inputs.length == txn.outputs.length) {
+            // this is a SDO state update txn
+            for (let outIndex = 0; outIndex < txn.outputs.length - 1; outIndex++) {   // the last outIndex is the payment so is ignored
+                const sdo = SpendableDO.fromTx(txn, outIndex)
+                const prevTxId = txn.inputs[outIndex].prevTxId.toString('hex')    // get the previous sdo state's transaction id
+                localUpdateSDO(sdo, message.block_time, SDO_curr_state, prevTxId);
+            }
+            processed_update_txn_count += 1
+        }
+    } catch (error) {
+        console.log("Error processing incoming Transaction Msg: ", message)
+        console.error(error)
     }
 }
 
