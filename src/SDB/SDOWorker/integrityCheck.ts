@@ -112,7 +112,7 @@ export async function integrityCheck(SDO_curr_state: Map<string, LLNodeSDO>) {
                         console.log("Local: ", txIdList[index])
                     } else if (response.data[index].result[0].tx_hash !== txIdList[index]) {
                         console.log("invalid", scriptList[index])
-                        console.log("BC   : ", response.data.result[0].tx_hash)
+                        console.log("BC   : ", response.data[index].result[0].tx_hash)
                         console.log("Local: ", txIdList[index])
                     } else {
                         // console.log("  valid", txIdList[index])

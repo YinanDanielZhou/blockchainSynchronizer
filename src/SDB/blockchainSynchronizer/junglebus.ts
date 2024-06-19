@@ -154,37 +154,50 @@ function startRESTfulServer() {
 // 1000000
 // let startBlockHeight = 842275;
 
-(async () => {
+const selfFixMode = true;
 
-    let rtn = await loadSDOsCompressed(SDO_curr_state, false)
-    persistence_version = rtn[0]
-    known_block_height = rtn[1]
+if (selfFixMode) {
+    (async () => {
+        let rtn = await loadSDOsCompressed(SDO_curr_state, false)
+        persistence_version = rtn[0]
+        known_block_height = rtn[1]
 
-    await client.Subscribe("1e5d27bb7ea6e4ef330bf6d9bb17a42430ffe8fdfff26cc00172e2a9089fcfc8", known_block_height + 1, onPublish, onStatus, onError, onMempool);
-    await client.Subscribe("b0f69bb599f193a42d8cdf360549e4665c551150acaba9724be0c81670e3bd00", known_block_height + 1, onPublish, () => {}, onError, onMempool); // only one subscription need to react to onStatus
-    await client.Subscribe("7c96a193f91a9d3ad7f0671169d399a80d711d3d900f4e3d52622b3c5280ef25", known_block_height + 1, onPublish, () => {}, onError, onMempool); // only one subscription need to react to onStatus
-    await client.Subscribe("0a8b721260a03b05447d76c571c297b872c2d5cb09ba2955b1a91da6b247469e", known_block_height + 1, onPublish, () => {}, onError, onMempool); // only one subscription need to react to onStatus
+        await integrityCheck(SDO_curr_state)
+
+        // const missedTxnList = [
+        //     "f01c9d69e67130edc23f1de7b0d46aebcac3cc20c4d7aa9d02329fbc6fb2c4c5",
+        //     "5bd24391b0f04597df0995ded3a8f439c02e41e9a1f72fb3682cb57a4adb0587",
+        //     "501d74a140c1a1116406a401b9fb9017a23b2d5d0020064045d15adec5014f50",
+        //     "e6a7ba21c4af02323cf8acedc8d7e8115cd026f2ee8ebe49ca677b1ba2bd2595",
+        //     '13849e951f9e37a2a5c300c9721e7ebda05cdd9eaddff079b654d53c129561fe',
+        // ]
+
+        // await makeupMissingTxn("", SDO_curr_state)
+
+        // persistSDOsCompressed(SDO_curr_state, persistence_version + 1, known_block_height);
+    })();
+
+} else {
+    (async () => {
+
+        let rtn = await loadSDOsCompressed(SDO_curr_state, false)
+        persistence_version = rtn[0]
+        known_block_height = rtn[1]
     
-    const APIserver = startRESTfulServer();
-
-    process.on('SIGINT', () => {
-        console.log("process on SIGINT.")
-        APIserver.close(() => {
-            console.log("API server is shut down.")
-        })
-        client.Disconnect()
-        persistSDOsCompressed(SDO_curr_state, persistence_version + 1, known_block_height);
-    });
-})();
-
-// (async () => {
-//     let rtn = await loadSDOsCompressed(SDO_curr_state, false)
-//     persistence_version = rtn[0]
-//     known_block_height = rtn[1]
-
-//     await integrityCheck(SDO_curr_state)
-
-//     // await makeupMissingTxn("", SDO_curr_state)
-
-//     // persistSDOsCompressed(SDO_curr_state, persistence_version + 1, known_block_height);
-// })();
+        await client.Subscribe("1e5d27bb7ea6e4ef330bf6d9bb17a42430ffe8fdfff26cc00172e2a9089fcfc8", known_block_height + 1, onPublish, onStatus, onError, onMempool);
+        await client.Subscribe("b0f69bb599f193a42d8cdf360549e4665c551150acaba9724be0c81670e3bd00", known_block_height + 1, onPublish, () => {}, onError, onMempool); // only one subscription need to react to onStatus
+        await client.Subscribe("7c96a193f91a9d3ad7f0671169d399a80d711d3d900f4e3d52622b3c5280ef25", known_block_height + 1, onPublish, () => {}, onError, onMempool); // only one subscription need to react to onStatus
+        await client.Subscribe("0a8b721260a03b05447d76c571c297b872c2d5cb09ba2955b1a91da6b247469e", known_block_height + 1, onPublish, () => {}, onError, onMempool); // only one subscription need to react to onStatus
+        
+        const APIserver = startRESTfulServer();
+    
+        process.on('SIGINT', () => {
+            console.log("process on SIGINT.")
+            APIserver.close(() => {
+                console.log("API server is shut down.")
+            })
+            client.Disconnect()
+            persistSDOsCompressed(SDO_curr_state, persistence_version + 1, known_block_height);
+        });
+    })();
+}
