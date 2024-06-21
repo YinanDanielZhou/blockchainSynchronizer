@@ -6,6 +6,7 @@ import { TxOutputRef, bsv } from "scrypt-ts";
 import { prettyString } from "../SDOWorker/read";
 import express, { Request, Response } from "express";
 import { integrityCheck, makeupMissingTxn } from "../SDOWorker/integrityCheck";
+import { traceOrigin } from "../SDOWorker/originTrace";
 
 
 SpendableDO.loadArtifact()
@@ -154,7 +155,7 @@ function startRESTfulServer() {
 // 1000000
 // let startBlockHeight = 842275;
 
-const selfFixMode = false;
+const selfFixMode = true;
 
 if (selfFixMode) {
     (async () => {
@@ -162,18 +163,19 @@ if (selfFixMode) {
         persistence_version = rtn[0]
         known_block_height = rtn[1]
 
+        // const tipTxid = ""
+        // const curTxvout = 0
+        // await traceOrigin(tipTxid, curTxvout)
+
         await integrityCheck(SDO_curr_state)
 
         // const missedTxnList = [
-        //     "f01c9d69e67130edc23f1de7b0d46aebcac3cc20c4d7aa9d02329fbc6fb2c4c5",
-        //     "5bd24391b0f04597df0995ded3a8f439c02e41e9a1f72fb3682cb57a4adb0587",
-        //     "501d74a140c1a1116406a401b9fb9017a23b2d5d0020064045d15adec5014f50",
-        //     "e6a7ba21c4af02323cf8acedc8d7e8115cd026f2ee8ebe49ca677b1ba2bd2595",
-        //     '13849e951f9e37a2a5c300c9721e7ebda05cdd9eaddff079b654d53c129561fe',
+        //     "441f1a8d4711cd3f70d05141c7d44714df28d64aef30a306f2963c5954d2f56b",
         // ]
-
-        // await makeupMissingTxn("", SDO_curr_state)
-
+        // for (let txid of missedTxnList) {
+        //     await makeupMissingTxn(txid, SDO_curr_state)
+        // }
+    
         // persistSDOsCompressed(SDO_curr_state, persistence_version + 1, known_block_height);
     })();
 
