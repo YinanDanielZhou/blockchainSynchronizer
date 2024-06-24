@@ -155,7 +155,7 @@ function startRESTfulServer() {
 // 1000000
 // let startBlockHeight = 842275;
 
-const selfFixMode = true;
+const selfFixMode = false;
 
 if (selfFixMode) {
     (async () => {

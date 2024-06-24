@@ -1,0 +1,1 @@
+shasum src/SDB/persistence/mainnet/storageCompressed.bin
