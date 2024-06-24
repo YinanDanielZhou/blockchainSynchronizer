@@ -1,9 +1,7 @@
-import { LLNodeSDO } from "../utiles/dataStructures";
 import axios, { AxiosResponse } from 'axios';
 import { SpendableDO } from "../../contracts/SpendableDO";
 import { prettyString } from "./read";
 import { bsv } from "scrypt-ts";
-import { localUpdateSDO } from "./diskIO";
 
 
 
