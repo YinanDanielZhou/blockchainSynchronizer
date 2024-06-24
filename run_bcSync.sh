@@ -1,0 +1,1 @@
+ts-node src/SDB/persistence/mainnet/storageCompressed.bin 
