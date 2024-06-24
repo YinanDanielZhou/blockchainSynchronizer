@@ -35,7 +35,7 @@ const client = new JungleBusClient("junglebus.gorillapool.io", {
 
 const onPublish = function(message) {
     console.log("IN-BLOCK TRANSACTION", message.id);
-    // processIncomingTransactionMsg(message)
+    processIncomingTransactionMsg(message)
 };
 
 const onStatus = function(message) {
