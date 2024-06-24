@@ -1,1 +1,1 @@
-ts-node src/SDB/persistence/mainnet/storageCompressed.bin 
+ts-node src/SDB/blockchainSynchronizer/junglebus.ts
