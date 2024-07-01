@@ -156,7 +156,7 @@ function startRESTfulServer() {
 // let startBlockHeight = 842275;
 
 const onLocal = true
-const selfFixMode = false;
+const selfFixMode = false
 
 if (selfFixMode) {
     (async () => {
