@@ -187,23 +187,23 @@ if (selfFixMode) {
         persistence_version = rtn[0]
         known_block_height = rtn[1]
         
-        // if (onLocal) {
-        //     // since each junglebus subscription can only be used by a single client process
-        //     // two different machines need to use two different sets of subsciptions
-        //     // although the subscriptions map to the same four BSV addresses, check gorillapool account for details
-        //     await client.Subscribe("f5333d02d9268157d84b61b8abc1bce7808bd2e666df80b1fa5b4b651e02085f", known_block_height + 1, onPublish, onStatus, onError, onMempool);
-        //     await client.Subscribe("4a99f647682b0d20ba784ba79729bdbc5e3e342dfa87a5ec7aaf20088b60f233", known_block_height + 1, onPublish, () => {}, onError, onMempool);
-        //     await client.Subscribe("3c4eaebe2540fe8d493716dd2a8b136f136d18d9cde3fea786d8027c59e29a9b", known_block_height + 1, onPublish, () => {}, onError, onMempool);
-        //     await client.Subscribe("4d9a49e7cbfd05d67eab11f0597d28c6cda0dd960f715cd5e04bdb5ecf10d6d1", known_block_height + 1, onPublish, () => {}, onError, onMempool);
+        if (onLocal) {
+            // since each junglebus subscription can only be used by a single client process
+            // two different machines need to use two different sets of subsciptions
+            // although the subscriptions map to the same four BSV addresses, check gorillapool account for details
+            await client.Subscribe("f5333d02d9268157d84b61b8abc1bce7808bd2e666df80b1fa5b4b651e02085f", known_block_height + 1, onPublish, onStatus, onError, onMempool);
+            await client.Subscribe("4a99f647682b0d20ba784ba79729bdbc5e3e342dfa87a5ec7aaf20088b60f233", known_block_height + 1, onPublish, () => {}, onError, onMempool);
+            await client.Subscribe("3c4eaebe2540fe8d493716dd2a8b136f136d18d9cde3fea786d8027c59e29a9b", known_block_height + 1, onPublish, () => {}, onError, onMempool);
+            await client.Subscribe("4d9a49e7cbfd05d67eab11f0597d28c6cda0dd960f715cd5e04bdb5ecf10d6d1", known_block_height + 1, onPublish, () => {}, onError, onMempool);
 
-        // } else {
-        //     await client.Subscribe("1e5d27bb7ea6e4ef330bf6d9bb17a42430ffe8fdfff26cc00172e2a9089fcfc8", known_block_height + 1, onPublish, onStatus, onError, onMempool);
-        //     await client.Subscribe("b0f69bb599f193a42d8cdf360549e4665c551150acaba9724be0c81670e3bd00", known_block_height + 1, onPublish, () => {}, onError, onMempool); // only one subscription need to react to onStatus
-        //     await client.Subscribe("7c96a193f91a9d3ad7f0671169d399a80d711d3d900f4e3d52622b3c5280ef25", known_block_height + 1, onPublish, () => {}, onError, onMempool); // only one subscription need to react to onStatus
-        //     await client.Subscribe("0a8b721260a03b05447d76c571c297b872c2d5cb09ba2955b1a91da6b247469e", known_block_height + 1, onPublish, () => {}, onError, onMempool); // only one subscription need to react to onStatus
-        // }
+        } else {
+            await client.Subscribe("1e5d27bb7ea6e4ef330bf6d9bb17a42430ffe8fdfff26cc00172e2a9089fcfc8", known_block_height + 1, onPublish, onStatus, onError, onMempool);
+            await client.Subscribe("b0f69bb599f193a42d8cdf360549e4665c551150acaba9724be0c81670e3bd00", known_block_height + 1, onPublish, () => {}, onError, onMempool); // only one subscription need to react to onStatus
+            await client.Subscribe("7c96a193f91a9d3ad7f0671169d399a80d711d3d900f4e3d52622b3c5280ef25", known_block_height + 1, onPublish, () => {}, onError, onMempool); // only one subscription need to react to onStatus
+            await client.Subscribe("0a8b721260a03b05447d76c571c297b872c2d5cb09ba2955b1a91da6b247469e", known_block_height + 1, onPublish, () => {}, onError, onMempool); // only one subscription need to react to onStatus
+        }
         
-        await client.Subscribe("dfa2cbcadf96c903969693983aeef8dfaa28bdd5ce71b1ea24a446c8eefec6db", known_block_height + 1, onPublish, onStatus, onError, onMempool);
+        // await client.Subscribe("dfa2cbcadf96c903969693983aeef8dfaa28bdd5ce71b1ea24a446c8eefec6db", known_block_height + 1, onPublish, onStatus, onError, onMempool);
         
         const APIserver = startRESTfulServer();
     
