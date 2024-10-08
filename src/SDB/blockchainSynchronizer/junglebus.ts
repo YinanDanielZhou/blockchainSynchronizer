@@ -124,13 +124,13 @@ function startRESTfulServer() {
         const llNode = SDO_curr_state.get(UID)
         if (llNode) {
             res.json({
-                UID: UID,
-                key: llNode.this.key, 
+                // UID: UID,
+                // key: llNode.this.key, 
                 val: llNode.this.val,
-                id: llNode.this.utxo.txId,
-                outIndex: llNode.this.utxo.outputIndex,
-                owner: llNode.this.ownerPubKey,
-                writer: llNode.this.writerPubKey
+                // id: llNode.this.utxo.txId,
+                // outIndex: llNode.this.utxo.outputIndex,
+                // owner: llNode.this.ownerPubKey,
+                // writer: llNode.this.writerPubKey
             })
         } else {
             res.status(404).json({ message: `SDO ${UID} does not exist.`})
