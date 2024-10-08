@@ -1,10 +1,6 @@
-import { JungleBusClient, ControlMessageStatusCode } from "@gorillapool/js-junglebus";
 import { LLNodeSDO } from "../utiles/dataStructures";
-import { loadSDOsCompressed, persistSDOsCompressed, localRegisterSDO, localUpdateSDO } from "../SDOWorker/diskIO";
+import { loadSDOsCompressed, persistSDOsCompressed } from "../SDOWorker/diskIO";
 import { SpendableDO } from "../../contracts/SpendableDO";
-import { TxOutputRef, bsv } from "scrypt-ts";
-import { prettyString } from "../SDOWorker/read";
-import express, { Request, Response } from "express";
 import { integrityCheck, makeupMissingTxn } from "../SDOWorker/integrityCheck";
 import { traceOrigin } from "../SDOWorker/originTrace";
 
