@@ -15,19 +15,26 @@ let known_block_height: number;
     let rtn = await newLoadSDOsCompressed(SDO_curr_state, false)
     persistence_version = rtn[0]
     known_block_height = rtn[1]
+    
+    const needToMakeUp = true
 
     // const tipTxid = ""
     // const curTxvout = 0
     // await traceOrigin(tipTxid, curTxvout)
 
-    await integrityCheck(SDO_curr_state)
+    if (needToMakeUp) {
+        const missedTxnList = [
+            "8abcced99af23990aa1104425f21a020f234ba1d67ffa12484b6728d6c8a55b7",
+            "7d81af3cf3b383f20ba8176f837ebadd7be333421665c530a3bf724448b78633",
+        ]
+        for (let txid of missedTxnList) {
+            await makeupMissingTxn(txid, SDO_curr_state)
+        }
+        persistSDOsCompressed(SDO_curr_state, persistence_version + 1, known_block_height);
+    } else {
+        await integrityCheck(SDO_curr_state)
+    }
+    
 
-    // const missedTxnList = [
-    //     "441f1a8d4711cd3f70d05141c7d44714df28d64aef30a306f2963c5954d2f56b",
-    // ]
-    // for (let txid of missedTxnList) {
-    //     await makeupMissingTxn(txid, SDO_curr_state)
-    // }
-
-    // persistSDOsCompressed(SDO_curr_state, persistence_version + 1, known_block_height);
+    // 
 })();
