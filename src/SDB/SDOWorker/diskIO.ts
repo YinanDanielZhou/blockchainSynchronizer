@@ -70,7 +70,7 @@ export async function newLoadSDOsCompressed(SDO_curr_state: Map<string, LLNodeSD
     let persistence_version = -1
 
     let rawTxMap : Map<string, string>;
-    fs.promises.readFile(rawTxFilePath).then((compressedRawTx) => {
+    await fs.promises.readFile(rawTxFilePath).then((compressedRawTx) => {
         const jsonString = pako.inflate(compressedRawTx, { to: 'string'})
         rawTxMap = jsonToMap(jsonString)
     }).catch((err) => {
@@ -79,7 +79,7 @@ export async function newLoadSDOsCompressed(SDO_curr_state: Map<string, LLNodeSD
     })
 
     let metaArray;
-    fs.promises.readFile(metaFilePath).then((compressedMeta) => {
+    await fs.promises.readFile(metaFilePath).then((compressedMeta) => {
         const jsonArray = pako.inflate(compressedMeta, { to: 'string' })
 
         if (jsonArray.length < 2) {
