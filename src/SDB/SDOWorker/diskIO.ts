@@ -7,6 +7,9 @@ import { TxOutputRef, bsv } from "scrypt-ts"
 import pako from 'pako';
 
 const MainnetPersistencePath = 'src/SDB/persistence/mainnet/storageCompressed.bin'
+const MainnetPersistencePathRawTx = 'src/SDB/persistence/mainnet/rawTxCompressed.bin'
+const MainnetPersistencePathMeta = 'src/SDB/persistence/mainnet/metaCompressed.bin'
+
 const TestnetPersistencePath = 'src/SDB/persistence/testnet/storageCompressed.bin'
 
 const usingTestnet = false
@@ -60,20 +63,26 @@ export async function loadSDOsCompressed(SDO_curr_state: Map<string, LLNodeSDO>,
 export function persistSDOsCompressed(SDO_curr_state: Map<string, LLNodeSDO>, persistence_version: number, known_block_height: number) {
     console.log("Persisting SDO instances")
     let array : Object[] = [persistence_version, known_block_height]
+    let rawTxMap : Map<string, string> = new Map();
 
     for (const [uid, llNodeSDO] of SDO_curr_state) {
         let curNode = llNodeSDO
-        let tx = (curNode.this.from as TxOutputRef).tx
+        let outputTx = (curNode.this.from as TxOutputRef).tx
 
-        const rawTx = (curNode.this.from as TxOutputRef).tx.uncheckedSerialize()
+        const rawTx = outputTx.uncheckedSerialize()
         const outputIndex = curNode.this.from?.outputIndex as number
+
+        if (!rawTxMap.has(outputTx.id)) {
+            rawTxMap.set(outputTx.id, rawTx)
+        }
         array.push({
-            rawTx: rawTx,
+            outputTxid: outputTx.id,
             outputIndex: outputIndex,
             block_time: llNodeSDO.block_time
         })
     }
-    const jsonArray = "[" + array.map(el => JSON.stringify(el)).join(",") + "]";
+    const jsonAllRawTx = mapToJson(rawTxMap)
+    const jsonArray = JSON.stringify(array);
     // console.log(jsonArray)
 
     let filePath
@@ -82,16 +91,28 @@ export function persistSDOsCompressed(SDO_curr_state: Map<string, LLNodeSDO>, pe
     } else {
         filePath = MainnetPersistencePath
     }
-    const compressedData = pako.deflate(jsonArray);
 
+    const rawTxFilePath = MainnetPersistencePathRawTx
+    const metaFilePath = MainnetPersistencePathMeta
+
+    const compressedRawTx = pako.deflate(jsonAllRawTx);
+    const compressedMeta = pako.deflate(jsonArray)
 
     // Write the JSON string to the file
-    fs.writeFile(filePath, compressedData, (err) => {
+    fs.writeFile(rawTxFilePath, compressedRawTx, (err) => {
         if (err) {
-            console.error('Error writing to file:', err);
+            console.error('Error writing rawTx to file:', err);
+        } else {
+            console.log(rawTxMap.size, ' raw txn has been persisted to file:', rawTxFilePath)  // first 2 objects are not SDO instances
+        }
+    })
+
+    fs.writeFile(metaFilePath, compressedMeta, (err) => {
+        if (err) {
+            console.error('Error writing meta to file:', err);
         } else {
             console.log(`Persistence_version ${array[0]}, Last known block height is ${array[1]}.`)  
-            console.log(array.length - 2, ' SDO instances has been persisted to file:', filePath)  // first 2 objects are not SDO instances
+            console.log(array.length - 2, ' SDO meta has been persisted to file:', metaFilePath)  // first 2 objects are not SDO instances
         }
     })
 }
@@ -143,4 +164,18 @@ export function localUpdateSDO(SDOstate: SpendableDO, block_time:number, SDO_cur
             SDO_curr_state.set(UID, newNode)
         }
     }
+}
+
+// Function to serialize a Map to JSON
+function mapToJson<K, V>(map: Map<K, V>): string {
+    // Convert the Map to an array of key-value pairs and stringify it
+    return JSON.stringify(Array.from(map.entries()));
+}
+
+// Function to deserialize a JSON string back to a Map
+function jsonToMap<K, V>(jsonStr: string): Map<K, V> {
+    // Parse the JSON string to get an array of key-value pairs
+    const entries: [K, V][] = JSON.parse(jsonStr);
+    // Convert the array back into a Map
+    return new Map<K, V>(entries);
 }
