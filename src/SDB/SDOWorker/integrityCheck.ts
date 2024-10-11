@@ -107,11 +107,11 @@ export async function integrityCheck(SDO_curr_state: Map<string, LLNodeSDO>) {
             then((response) => {
                 for (let index = 0; index < response.data.length; index++) {
                     if (response.data[index].result.length == 0) {
-                        // console.log("invalid", scriptList[index])
+                        console.log("invalid", scriptList[index])
                         console.log("Missing   : no valid UTXO")
                         console.log("Local: ", txIdList[index])
                     } else if (response.data[index].result[0].tx_hash !== txIdList[index]) {
-                        // console.log("invalid", scriptList[index])
+                        console.log("invalid", scriptList[index])
                         console.log("Missing   : ", response.data[index].result[0].tx_hash)
                         console.log("Local: ", txIdList[index])
                     } else {
