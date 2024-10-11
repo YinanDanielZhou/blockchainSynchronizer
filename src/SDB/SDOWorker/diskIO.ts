@@ -85,13 +85,6 @@ export function persistSDOsCompressed(SDO_curr_state: Map<string, LLNodeSDO>, pe
     const jsonArray = JSON.stringify(array);
     // console.log(jsonArray)
 
-    let filePath
-    if (usingTestnet) {
-        filePath = TestnetPersistencePath
-    } else {
-        filePath = MainnetPersistencePath
-    }
-
     const rawTxFilePath = MainnetPersistencePathRawTx
     const metaFilePath = MainnetPersistencePathMeta
 
