@@ -60,6 +60,64 @@ export async function loadSDOsCompressed(SDO_curr_state: Map<string, LLNodeSDO>,
     })
 }
 
+export async function newLoadSDOsCompressed(SDO_curr_state: Map<string, LLNodeSDO>, verbose: boolean = false) {
+    console.log("Loading pesisted SDO instances.....")
+
+    const rawTxFilePath = MainnetPersistencePathRawTx
+    const metaFilePath = MainnetPersistencePathMeta
+
+    let known_block_height = -1
+    let persistence_version = -1
+
+    let rawTxMap : Map<string, string>;
+    fs.promises.readFile(rawTxFilePath).then((compressedRawTx) => {
+        const jsonString = pako.inflate(compressedRawTx, { to: 'string'})
+        rawTxMap = jsonToMap(jsonString)
+    }).catch((err) => {
+        console.error(err)
+        throw err
+    })
+
+    let metaArray;
+    fs.promises.readFile(metaFilePath).then((compressedMeta) => {
+        const jsonArray = pako.inflate(compressedMeta, { to: 'string' })
+
+        if (jsonArray.length < 2) {
+            console.log("No SDO was persisted in file ", metaFilePath)
+            return [persistence_version, known_block_height]
+        }
+
+        metaArray = (JSON.parse(jsonArray) as Object[])
+
+    }).catch((err) => {
+        console.error(err)
+        throw err
+    })
+
+    metaArray.forEach((restoredObject : any, index) => {
+        if (index == 0) {
+            persistence_version = restoredObject
+            return 
+        }
+        if (index == 1) {
+            known_block_height = restoredObject
+            return
+        }
+        const SDO_txid = restoredObject.outputTxid
+        const rawTx = new bsv.Transaction(rawTxMap.get(SDO_txid))
+        const restoredSDO = SpendableDO.fromTx(rawTx, restoredObject.outputIndex)
+        localRegisterSDO(restoredSDO, restoredObject.block_time, SDO_curr_state, false)
+        if (verbose) {
+            console.log(prettyString(restoredSDO))
+        }
+    })
+    console.log(`Persistence version ${persistence_version}`)
+    console.log("Loaded ", metaArray.length - 2, " SDO instances.")   // first 2 objects are not SDO instances
+    console.log(`Resuming from block height ${known_block_height}`)
+    return [persistence_version, known_block_height]
+}
+
+
 export function persistSDOsCompressed(SDO_curr_state: Map<string, LLNodeSDO>, persistence_version: number, known_block_height: number) {
     console.log("Persisting SDO instances")
     let array : Object[] = [persistence_version, known_block_height]
@@ -166,9 +224,9 @@ function mapToJson<K, V>(map: Map<K, V>): string {
 }
 
 // Function to deserialize a JSON string back to a Map
-function jsonToMap<K, V>(jsonStr: string): Map<K, V> {
+function jsonToMap<K, V>(jsonStr: string): Map<string, string> {
     // Parse the JSON string to get an array of key-value pairs
-    const entries: [K, V][] = JSON.parse(jsonStr);
+    const entries: [string, string][] = JSON.parse(jsonStr);
     // Convert the array back into a Map
-    return new Map<K, V>(entries);
+    return new Map<string, string>(entries);
 }

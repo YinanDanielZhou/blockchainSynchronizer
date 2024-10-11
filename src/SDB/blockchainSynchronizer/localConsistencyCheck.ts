@@ -1,5 +1,5 @@
 import { LLNodeSDO } from "../utiles/dataStructures";
-import { loadSDOsCompressed, persistSDOsCompressed } from "../SDOWorker/diskIO";
+import { loadSDOsCompressed, newLoadSDOsCompressed, persistSDOsCompressed } from "../SDOWorker/diskIO";
 import { SpendableDO } from "../../contracts/SpendableDO";
 import { integrityCheck, makeupMissingTxn } from "../SDOWorker/integrityCheck";
 import { traceOrigin } from "../SDOWorker/originTrace";
@@ -12,7 +12,7 @@ let persistence_version: number;
 let known_block_height: number;
 
 (async () => {
-    let rtn = await loadSDOsCompressed(SDO_curr_state, false)
+    let rtn = await newLoadSDOsCompressed(SDO_curr_state, false)
     persistence_version = rtn[0]
     known_block_height = rtn[1]
 
@@ -20,7 +20,7 @@ let known_block_height: number;
     // const curTxvout = 0
     // await traceOrigin(tipTxid, curTxvout)
 
-    await integrityCheck(SDO_curr_state)
+    // await integrityCheck(SDO_curr_state)
 
     // const missedTxnList = [
     //     "441f1a8d4711cd3f70d05141c7d44714df28d64aef30a306f2963c5954d2f56b",
