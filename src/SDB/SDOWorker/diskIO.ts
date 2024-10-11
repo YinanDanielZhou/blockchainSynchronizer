@@ -119,7 +119,7 @@ export function localUpdateSDO(SDOstate: SpendableDO, block_time:number, SDO_cur
     let newNode = {
         this: SDOstate,
         block_time: block_time,
-        spent: false     // set this to true to simulate BCSS
+        spent: true     // set this to true to simulate BCSS (or to prevent inconsistency when doing multi-updates on LCSS)
     } as LLNodeSDO
 
     // this SDO has a previous state in the blockchain so it should have one local as well
