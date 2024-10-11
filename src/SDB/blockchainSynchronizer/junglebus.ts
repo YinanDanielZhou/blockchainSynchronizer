@@ -1,6 +1,6 @@
 import { JungleBusClient, ControlMessageStatusCode } from "@gorillapool/js-junglebus";
 import { LLNodeSDO } from "../utiles/dataStructures";
-import { loadSDOsCompressed, persistSDOsCompressed, localRegisterSDO, localUpdateSDO } from "../SDOWorker/diskIO";
+import { loadSDOsCompressed, persistSDOsCompressed, localRegisterSDO, localUpdateSDO, newLoadSDOsCompressed } from "../SDOWorker/diskIO";
 import { SpendableDO } from "../../contracts/SpendableDO";
 import { TxOutputRef, bsv } from "scrypt-ts";
 import { prettyString } from "../SDOWorker/read";
@@ -157,7 +157,7 @@ const onLocal = true;
 
 (async () => {
 
-    let rtn = await loadSDOsCompressed(SDO_curr_state, false)
+    let rtn = await newLoadSDOsCompressed(SDO_curr_state, false)
     persistence_version = rtn[0]
     known_block_height = rtn[1]
     
