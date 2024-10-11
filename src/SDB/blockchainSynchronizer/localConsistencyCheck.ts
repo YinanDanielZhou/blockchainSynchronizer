@@ -20,7 +20,7 @@ let known_block_height: number;
     // const curTxvout = 0
     // await traceOrigin(tipTxid, curTxvout)
 
-    // await integrityCheck(SDO_curr_state)
+    await integrityCheck(SDO_curr_state)
 
     // const missedTxnList = [
     //     "441f1a8d4711cd3f70d05141c7d44714df28d64aef30a306f2963c5954d2f56b",
