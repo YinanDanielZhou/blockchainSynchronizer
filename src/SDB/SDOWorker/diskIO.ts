@@ -73,8 +73,7 @@ export function persistSDOsCompressed(SDO_curr_state: Map<string, LLNodeSDO>, pe
             block_time: llNodeSDO.block_time
         })
     }
-    
-    const jsonArray = JSON.stringify(array)
+    const jsonArray = "[" + array.map(el => JSON.stringify(el)).join(",") + "]";
     // console.log(jsonArray)
 
     let filePath
