@@ -16,7 +16,7 @@ let known_block_height: number;
     persistence_version = rtn[0]
     known_block_height = rtn[1]
     
-    const needToMakeUp = true
+    const needToMakeUp = false
 
     // const tipTxid = ""
     // const curTxvout = 0
