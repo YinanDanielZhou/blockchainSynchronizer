@@ -15,7 +15,7 @@
 //     const network = 'test'
 //     const apiUrl = `https://api.whatsonchain.com/v1/bsv/${network}/address/${address}/unconfirmed/unspent`;
 
-//     const TaalTestAPIKey = 'testnet_fbfc7b42785206aae6350d8bef8a15f8'
+//     const TaalTestAPIKey = ''
 //     const customHeaders = {
 //         'Content-Type': 'application/json',
 //         'Authorization': TaalTestAPIKey
