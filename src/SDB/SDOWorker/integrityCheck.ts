@@ -31,7 +31,7 @@ async function getBulkConfirmedUTXOByScript (scriptHashList: string[]) {
     const apiUrl = `https://api.whatsonchain.com/v1/bsv/${network}/scripts/confirmed/unspent`;
 
 
-    const TaalAPIKey = 'mainnet_939f95f7b15fbf7086ad0a42552c9613'
+    const TaalAPIKey = ''
     const customHeaders = {
         'Content-Type': 'application/json',
         'Authorization': TaalAPIKey
@@ -48,7 +48,7 @@ export async function getScriptHistory(scriptHash: string) {
     const network = 'main'
     const apiUrl = `https://api.whatsonchain.com/v1/bsv/${network}/script/${scriptHash}/confirmed/history`;
 
-    const TaalAPIKey = 'mainnet_939f95f7b15fbf7086ad0a42552c9613'
+    const TaalAPIKey = ''
     const customHeaders = {
         'Content-Type': 'application/json',
         'Authorization': TaalAPIKey
@@ -138,7 +138,7 @@ async function getRawTxnByHash(hash: string) {
     const apiUrl = `https://api.whatsonchain.com/v1/bsv/${network}/tx/${hash}/hex`;
 
 
-    const TaalAPIKey = 'mainnet_939f95f7b15fbf7086ad0a42552c9613'
+    const TaalAPIKey = ''
     const customHeaders = {
         'Content-Type': 'application/json',
         'Authorization': TaalAPIKey
@@ -151,7 +151,7 @@ async function getTxnBlockTime(hash: string) {
     const network = 'main'
     const apiUrl = `https://api.whatsonchain.com/v1/bsv/${network}/tx/hash/${hash}`;
 
-    const TaalAPIKey = 'mainnet_939f95f7b15fbf7086ad0a42552c9613'
+    const TaalAPIKey = ''
     const customHeaders = {
         'Content-Type': 'application/json',
         'Authorization': TaalAPIKey

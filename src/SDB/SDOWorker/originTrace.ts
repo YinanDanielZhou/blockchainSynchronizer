@@ -19,7 +19,7 @@ async function getRawTxnByHash(hash: string) {
     const apiUrl = `https://api.whatsonchain.com/v1/bsv/${network}/tx/${hash}/hex`;
 
 
-    const TaalAPIKey = 'mainnet_939f95f7b15fbf7086ad0a42552c9613'
+    const TaalAPIKey = ''
     const customHeaders = {
         'Content-Type': 'application/json',
         'Authorization': TaalAPIKey
