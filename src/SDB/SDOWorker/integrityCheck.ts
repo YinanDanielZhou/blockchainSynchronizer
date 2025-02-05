@@ -151,7 +151,7 @@ async function getTxnBlockTime(hash: string) {
     const network = 'main'
     const apiUrl = `https://api.whatsonchain.com/v1/bsv/${network}/tx/hash/${hash}`;
 
-    const TaalAPIKey = ''
+    const TaalAPIKey = 'mainnet_570776b5deebcb9d280b924e0f615474'
     const customHeaders = {
         'Content-Type': 'application/json',
         'Authorization': TaalAPIKey

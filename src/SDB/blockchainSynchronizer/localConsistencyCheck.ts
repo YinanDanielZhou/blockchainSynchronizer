@@ -24,7 +24,7 @@ let known_block_height: number;
 
     if (needToMakeUp) {
         const missedTxnList = [
-	   "e66412472972bca3797c984c5ae7e0b0a143043c4bf6c0d90abebd024c99f4f7"
+	   "5e28713c2f420112019e9725111cbcacfcecf9e0bfe6ca567f0cf66b0ae9eb19"
         ]
         for (let txid of missedTxnList) {
             await makeupMissingTxn(txid, SDO_curr_state)
