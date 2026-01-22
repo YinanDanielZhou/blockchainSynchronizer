@@ -1,7 +1,8 @@
 import axios, { AxiosResponse } from 'axios';
-import { SpendableDO } from "../../contracts/SpendableDO";
+// import { SpendableDO } from "../../contracts/SpendableDO";
 import { prettyString } from "./read";
 import { bsv } from "scrypt-ts";
+import { SDOOwnerWriter } from '../../contracts/SDO_v7';
 
 
 
@@ -41,7 +42,7 @@ export async function traceOrigin(tipTxid: string, tipTxvout: number) {
         let curTxn = new bsv.Transaction((await getRawTxnByHash(curTxid)).data) 
         let curSDO
         try {
-            curSDO = SpendableDO.fromTx(curTxn, curTxvout)
+            curSDO = SDOOwnerWriter.fromTx(curTxn, curTxvout)
         } catch (error) {
             console.log("Origin deployment is reached.")
             break;

@@ -1,15 +1,19 @@
 import { JungleBusClient, ControlMessageStatusCode } from "@gorillapool/js-junglebus";
-import { LLNodeSDO } from "../utiles/dataStructures";
-import { loadSDOsCompressed, persistSDOsCompressed, localRegisterSDO, localUpdateSDO, newLoadSDOsCompressed } from "../SDOWorker/diskIO";
-import { SpendableDO } from "../../contracts/SpendableDO";
+import { LLNodeSDO } from "../utils/dataStructures";
+import { persistSDOsCompressed, localRegisterSDO, localUpdateSDO, newLoadSDOsCompressed, localDeleteSDO } from "../SDOWorker/diskIO";
+// import { SpendableDO } from "../../contracts/SpendableDO";
+import { SDOOwnerWriter } from "../../contracts/SDO_v7";
 import { TxOutputRef, bsv } from "scrypt-ts";
 import { prettyString } from "../SDOWorker/read";
 import express, { Request, Response } from "express";
 
 
-SpendableDO.loadArtifact()
+// SpendableDO.loadArtifact()
 
 let SDO_curr_state = new Map<string, LLNodeSDO>();
+let SDO_lookup = new Map<string, string>();
+let rawTxMap : Map<string, string> = new Map();
+
 let persistence_version: number;
 let known_block_height: number;
 let processed_update_txn_count = 0;
@@ -33,7 +37,7 @@ const client = new JungleBusClient("junglebus.gorillapool.io", {
 
 const onPublish = function(message) {
     console.log("IN-BLOCK TRANSACTION", message.id);
-    // processIncomingTransactionMsg(message)
+    processIncomingTransactionMsg(message)
 };
 
 const onStatus = function(message) {
@@ -64,19 +68,38 @@ const onMempool = function(message) {
 function processIncomingTransactionMsg(message) {
     try{
         const txn = new bsv.Transaction(message.transaction)
-        if (txn.outputs.length < 2) {
-            console.log("Txn structure does not match a SDB transaction.")
+        if (rawTxMap.has(txn.id)) {
+            console.log("Txn already processed.")
             return
         }
+
+        const rawTx = txn.uncheckedSerialize()
+        rawTxMap.set(txn.id, rawTx)
     
-        if (txn.inputs.length == 1 && txn.outputs.length == 2) {
+        if (txn.inputs.length == 1 && txn.outputs.length >= 2) {
             // this is a SDO deployment txn
             try {
-                const sdo = SpendableDO.fromTx(txn, 0)
-                sdo.markAsGenesis()
-                localRegisterSDO(sdo, message.block_time, SDO_curr_state, true);
+                const sdo = SDOOwnerWriter.fromTx(txn, 0)
+                localRegisterSDO(sdo, message.block_time, SDO_curr_state, SDO_lookup, true);
             } catch (error) {
                 console.log("Incoming txn looks like a sdo deployment, but registering fail with Error below.")
+                console.log(error)
+            }
+        }
+
+        if (txn.inputs.length >= 2 && txn.outputs.length == 1) {
+            // this is a SDO deletion txn
+            try {
+                const outPoint = txn.inputs[0].prevTxId.toString('hex') + txn.inputs[0].outputIndex.toString() 
+                if (!SDO_lookup.has(outPoint)) {
+                    console.log("SDO_lookup does not find a SDO at outPoint " + outPoint + ". Skipping.")
+                    return
+                } else {
+                    const UID = SDO_lookup.get(outPoint)
+                    localDeleteSDO(UID as string, SDO_curr_state, true)
+                }
+            } catch (error) {
+                console.log("Incoming txn looks like a sdo deletion, but deletion fail with Error below.")
                 console.log(error)
             }
         }
@@ -84,9 +107,9 @@ function processIncomingTransactionMsg(message) {
         if (txn.inputs.length == txn.outputs.length) {
             // this is a SDO state update txn
             for (let outIndex = 0; outIndex < txn.outputs.length - 1; outIndex++) {   // the last outIndex is the payment so is ignored
-                const sdo = SpendableDO.fromTx(txn, outIndex)
+                const sdo = SDOOwnerWriter.fromTx(txn, outIndex)
                 const prevTxId = txn.inputs[outIndex].prevTxId.toString('hex')    // get the previous sdo state's transaction id
-                localUpdateSDO(sdo, message.block_time, SDO_curr_state, prevTxId);
+                localUpdateSDO(sdo, message.block_time, SDO_curr_state, SDO_lookup, prevTxId);
             }
             processed_update_txn_count += 1
         }
@@ -110,7 +133,8 @@ function startRESTfulServer() {
         if (llNode) {
             if (!llNode.spent) {
                 llNode.spent = true
-                res.json(llNode.this.utxo)
+                let sdo = llNode.this
+                res.json({ls: sdo.getLockingScript(), txid: sdo.txId, outIndex: sdo.outIndex, sat: sdo.satoshis})
             } else {
                 res.status(409).json({ message: `SDO ${UID} has being locked.`})
             }
@@ -126,7 +150,7 @@ function startRESTfulServer() {
             res.json({
                 // UID: UID,
                 // key: llNode.this.key, 
-                val: llNode.this.val,
+                val: llNode.this.value,
                 // id: llNode.this.utxo.txId,
                 // outIndex: llNode.this.utxo.outputIndex,
                 // owner: llNode.this.ownerPubKey,
@@ -139,6 +163,25 @@ function startRESTfulServer() {
 
     app.get('/allsdo', (req: Request, res: Response) => {
         const arr = Array.from(SDO_curr_state.keys())
+        res.json(arr)
+    });
+
+    app.get('/somesdo/:quantity', (req: Request, res: Response) => {
+        
+        const { quantity } = req.params;
+        const count = Number(quantity);
+        if (count > SDO_curr_state.size) {
+            res.status(400).json({ message: `quantity ${quantity} is too large.`})
+            return
+        }
+
+        // Generate random unique indexes
+        const allKeys = Array.from(SDO_curr_state.keys());
+        const selectedIndexes = new Set<number>();
+        while (selectedIndexes.size < count) {
+            selectedIndexes.add(Math.floor(Math.random() * allKeys.length));
+        }
+        const arr = Array.from(selectedIndexes).map(i => allKeys[i]);
         res.json(arr)
     });
 
@@ -157,9 +200,12 @@ const onLocal = true;
 
 (async () => {
 
-    let rtn = await newLoadSDOsCompressed(SDO_curr_state, false)
+    let rtn = await newLoadSDOsCompressed(SDO_curr_state, SDO_lookup, rawTxMap, false)
     persistence_version = rtn[0]
     known_block_height = rtn[1]
+
+    // persistence_version = 1
+    // known_block_height = 931930
     
     if (onLocal) {
         // since each junglebus subscription can only be used by a single client process
@@ -187,6 +233,6 @@ const onLocal = true;
             console.log("API server is shut down.")
         })
         client.Disconnect()
-        persistSDOsCompressed(SDO_curr_state, persistence_version + 1, known_block_height);
+        persistSDOsCompressed(SDO_curr_state, rawTxMap, persistence_version + 1, known_block_height);
     });
 })();
