@@ -256,9 +256,11 @@ export class SDOOwnerWriter {
     }
 
     private scriptSigHashWorks (inputScriptSigSerialTxPart: string) {
-        const sha256Hash = bsv.crypto.Hash.sha256sha256(Buffer.from(inputScriptSigSerialTxPart, 'hex'))        
-        // hash mod 4 == 1: check if the last 2 bits are "01" (bitwise AND with 0x03)
-        return (sha256Hash[31] & 0x03) === 1
+        const sha256Hash = bsv.crypto.Hash.sha256sha256(Buffer.from(inputScriptSigSerialTxPart, 'hex'))
+        // Require the hash mod 4 == 1: check if the last 2 bits are "01" (bitwise AND with 0x03)
+        // Require the first byte to be greater than 0x03; the hash will be rshifted by 2 bits and the result must NOT have a leading 00 byte
+        //      otherwise the constructed DER sig would have a incorrect format since we hard coded the length of s to be 32 bytes
+        return ((sha256Hash[31] & 0x03) === 1) && (sha256Hash[0] > 0x03)
     }
 
 }
