@@ -9,7 +9,7 @@ export class SDOOwnerWriter {
 
     static ADDRLENINBYTES = 20
 
-    static lockingScriptTemplate = fs.readFileSync('./src/contracts/Sdo_V7.txt').toString()
+    static lockingScriptTemplate = fs.readFileSync('./src/contracts/sdo_v7.txt').toString()
 
     static ownerAddrPos = SDOOwnerWriter.lockingScriptTemplate.indexOf("00".repeat(20))
     static writerAddrPos = SDOOwnerWriter.lockingScriptTemplate.indexOf("00".repeat(20), SDOOwnerWriter.ownerAddrPos + 40)
