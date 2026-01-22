@@ -257,8 +257,8 @@ export class SDOOwnerWriter {
 
     private scriptSigHashWorks (inputScriptSigSerialTxPart: string) {
         const sha256Hash = bsv.crypto.Hash.sha256sha256(Buffer.from(inputScriptSigSerialTxPart, 'hex'))        
-        // hash(SigHash preimage) mod 4 == 1 if the last char in hex string is 1, 3, 5, 7, 9, b, d
-        return ["1", "3", "5", "7", "9", "b", "d"].includes(sha256Hash.toString('hex').charAt(63))
+        // hash mod 4 == 1: check if the last 2 bits are "01" (bitwise AND with 0x03)
+        return (sha256Hash[31] & 0x03) === 1
     }
 
 }
